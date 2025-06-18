@@ -1,0 +1,819 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Puzzle Interattivo 50 Tessere</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: white;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 30px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5rem;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .game-controls {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            position: relative;
+        }
+
+        .btn-primary {
+            background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: linear-gradient(45deg, #4834d4, #686de0);
+            color: white;
+        }
+
+        .btn-warning {
+            background: linear-gradient(45deg, #ffa726, #ff9800);
+            color: white;
+        }
+
+        .btn-info {
+            background: linear-gradient(45deg, #26c6da, #00acc1);
+            color: white;
+        }
+
+        .btn-success {
+            background: linear-gradient(45deg, #00d2d3, #54a0ff);
+            color: white;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .btn:disabled {
+            background: rgba(128, 128, 128, 0.5);
+            cursor: not-allowed;
+            opacity: 0.5;
+        }
+
+        .btn:disabled:hover {
+            transform: none;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn.executing {
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .game-area {
+            display: flex;
+            gap: 30px;
+            justify-content: center;
+            flex-wrap: wrap;
+            align-items: flex-start;
+        }
+
+        .puzzle-container {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 15px;
+            padding: 20px;
+            backdrop-filter: blur(5px);
+        }
+
+        .puzzle-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 50px);
+            grid-template-rows: repeat(10, 50px);
+            gap: 2px;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 10px;
+            border-radius: 10px;
+        }
+
+        .puzzle-piece {
+            width: 50px;
+            height: 50px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .puzzle-piece:hover {
+            transform: scale(1.05);
+            border-color: #ffdd59;
+            box-shadow: 0 0 15px rgba(255, 221, 89, 0.5);
+        }
+
+        .puzzle-piece.selected {
+            border-color: #ff6b6b;
+            box-shadow: 0 0 20px rgba(255, 107, 107, 0.7);
+            transform: scale(1.1);
+        }
+
+        .puzzle-piece.correct {
+            border-color: #00d2d3;
+            box-shadow: 0 0 15px rgba(0, 210, 211, 0.5);
+        }
+
+        .puzzle-piece.highlight-target {
+            border-color: #ffdd59;
+            box-shadow: 0 0 20px rgba(255, 221, 89, 0.8);
+            animation: highlight-pulse 1s infinite;
+        }
+
+        @keyframes highlight-pulse {
+            0% { box-shadow: 0 0 20px rgba(255, 221, 89, 0.8); }
+            50% { box-shadow: 0 0 30px rgba(255, 221, 89, 1); }
+            100% { box-shadow: 0 0 20px rgba(255, 221, 89, 0.8); }
+        }
+
+        .shuffled-pieces {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 15px;
+            padding: 20px;
+            backdrop-filter: blur(5px);
+            max-width: 300px;
+            height: fit-content;
+        }
+
+        .pieces-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 50px);
+            gap: 5px;
+            justify-content: center;
+        }
+
+        .status {
+            text-align: center;
+            margin: 20px 0;
+            font-size: 18px;
+            font-weight: bold;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        #imageInput {
+            display: none;
+        }
+
+        .drop-zone {
+            border: 3px dashed rgba(255, 255, 255, 0.5);
+            border-radius: 15px;
+            padding: 40px;
+            text-align: center;
+            margin: 20px 0;
+            transition: all 0.3s ease;
+        }
+
+        .drop-zone:hover {
+            border-color: #ffdd59;
+            background: rgba(255, 221, 89, 0.1);
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 20px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(45deg, #00d2d3, #54a0ff);
+            width: 0%;
+            transition: width 0.5s ease;
+            border-radius: 10px;
+        }
+
+        .congratulations {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+            color: white;
+            padding: 30px;
+            border-radius: 20px;
+            font-size: 24px;
+            font-weight: bold;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            animation: bounce 0.5s ease;
+        }
+
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translate(-50%, -50%) translateY(0); }
+            40% { transform: translate(-50%, -50%) translateY(-30px); }
+            60% { transform: translate(-50%, -50%) translateY(-15px); }
+        }
+
+        .image-preview {
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .preview-img {
+            max-width: 250px;
+            max-height: 300px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .repeat-indicator {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: #ff6b6b;
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+
+        @media (max-width: 768px) {
+            .game-area {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .puzzle-grid {
+                grid-template-columns: repeat(5, 40px);
+                grid-template-rows: repeat(10, 40px);
+            }
+            
+            .puzzle-piece {
+                width: 40px;
+                height: 40px;
+            }
+            
+            .pieces-grid {
+                grid-template-columns: repeat(4, 40px);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧩 Puzzle Interattivo 50 Tessere</h1>
+        
+        <div class="controls">
+            <button class="btn btn-primary" onclick="document.getElementById('imageInput').click()">
+                📁 Carica Immagine
+            </button>
+        </div>
+
+        <input type="file" id="imageInput" accept="image/*" onchange="loadImage(event)">
+
+        <div class="drop-zone" onclick="document.getElementById('imageInput').click()">
+            <p>🖼️ Clicca qui o trascina un'immagine per iniziare il puzzle!</p>
+        </div>
+
+        <div class="image-preview hidden" id="imagePreview">
+            <h3>📷 Immagine Caricata:</h3>
+            <img id="previewImg" class="preview-img" alt="Anteprima">
+        </div>
+
+        <div class="progress-bar">
+            <div class="progress-fill" id="progressFill"></div>
+        </div>
+
+        <div class="status" id="status">Carica un'immagine per iniziare</div>
+
+        <div class="game-area hidden" id="gameArea">
+            <div class="puzzle-container">
+                <h3>🎯 Griglia Puzzle</h3>
+                <div class="puzzle-grid" id="puzzleGrid"></div>
+                
+                <div class="game-controls">
+                    <button class="btn btn-secondary" onclick="resetPuzzle()">🔄 Reset</button>
+                    <button class="btn btn-warning" onclick="undoMove()" id="undoBtn" disabled>
+                        ↩️ Undo
+                    </button>
+                    <button class="btn btn-info" onclick="repeatMove()" id="repeatBtn" disabled>
+                        ↪️ Repeat
+                        <span class="repeat-indicator hidden" id="repeatIndicator">0</span>
+                    </button>
+                    <button class="btn btn-success" onclick="savePuzzle()">💾 Salva JPG</button>
+                </div>
+            </div>
+
+            <div class="shuffled-pieces">
+                <h3>🔀 Tessere Mescolate</h3>
+                <div class="pieces-grid" id="piecesGrid"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentImage = null;
+        let imageCanvas = null;
+        let pieces = [];
+        let selectedPiece = null;
+        let correctPlacements = 0;
+        let totalPieces = 50;
+        let moveHistory = [];
+        let redoHistory = [];
+        let isRepeating = false;
+
+        function loadImage(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                currentImage = new Image();
+                currentImage.onload = function() {
+                    const preview = document.getElementById('imagePreview');
+                    const previewImg = document.getElementById('previewImg');
+                    previewImg.src = e.target.result;
+                    preview.classList.remove('hidden');
+                    
+                    prepareImageForPuzzle();
+                    initializePuzzle();
+                };
+                currentImage.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function prepareImageForPuzzle() {
+            imageCanvas = document.createElement('canvas');
+            const ctx = imageCanvas.getContext('2d');
+            
+            imageCanvas.width = 250;
+            imageCanvas.height = 500;
+            
+            ctx.drawImage(currentImage, 0, 0, imageCanvas.width, imageCanvas.height);
+        }
+
+        function initializePuzzle() {
+            document.querySelector('.drop-zone').style.display = 'none';
+            document.getElementById('gameArea').classList.remove('hidden');
+            
+            moveHistory = [];
+            redoHistory = [];
+            updateUndoRedoButtons();
+            
+            createPuzzlePieces();
+            shufflePieces();
+            updateStatus();
+            updateProgress();
+        }
+
+        function createPuzzlePieces() {
+            const puzzleGrid = document.getElementById('puzzleGrid');
+            const piecesGrid = document.getElementById('piecesGrid');
+            
+            puzzleGrid.innerHTML = '';
+            piecesGrid.innerHTML = '';
+            pieces = [];
+            correctPlacements = 0;
+
+            for (let i = 0; i < totalPieces; i++) {
+                const row = Math.floor(i / 5);
+                const col = i % 5;
+                
+                const puzzleSlot = document.createElement('div');
+                puzzleSlot.className = 'puzzle-piece';
+                puzzleSlot.dataset.position = i;
+                puzzleSlot.onclick = () => placePiece(i);
+                puzzleGrid.appendChild(puzzleSlot);
+
+                const piece = document.createElement('div');
+                piece.className = 'puzzle-piece';
+                piece.dataset.originalPosition = i;
+                piece.dataset.currentPosition = -1;
+                
+                const pieceCanvas = document.createElement('canvas');
+                pieceCanvas.width = 50;
+                pieceCanvas.height = 50;
+                const pieceCtx = pieceCanvas.getContext('2d');
+                
+                pieceCtx.drawImage(
+                    imageCanvas,
+                    col * 50, row * 50, 50, 50,
+                    0, 0, 50, 50
+                );
+                
+                const dataURL = pieceCanvas.toDataURL();
+                piece.style.backgroundImage = `url(${dataURL})`;
+                piece.style.backgroundSize = '50px 50px';
+                piece.style.backgroundRepeat = 'no-repeat';
+                piece.onclick = () => selectPiece(piece);
+                
+                pieces.push(piece);
+                piecesGrid.appendChild(piece);
+            }
+        }
+
+        function shufflePieces() {
+            for (let i = pieces.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [pieces[i], pieces[j]] = [pieces[j], pieces[i]];
+            }
+
+            const piecesGrid = document.getElementById('piecesGrid');
+            piecesGrid.innerHTML = '';
+            pieces.forEach(piece => {
+                piecesGrid.appendChild(piece);
+            });
+        }
+
+        function selectPiece(piece) {
+            if (selectedPiece) {
+                selectedPiece.classList.remove('selected');
+            }
+
+            selectedPiece = piece;
+            piece.classList.add('selected');
+        }
+
+        function placePiece(position) {
+            if (!selectedPiece) return;
+
+            const puzzleSlots = document.querySelectorAll('#puzzleGrid .puzzle-piece');
+            const targetSlot = puzzleSlots[position];
+
+            if (targetSlot.style.backgroundImage) return;
+
+            const moveData = {
+                pieceId: selectedPiece.dataset.originalPosition,
+                position: position,
+                backgroundImage: selectedPiece.style.backgroundImage,
+                wasCorrect: parseInt(selectedPiece.dataset.originalPosition) === position,
+                timestamp: Date.now()
+            };
+
+            if (!isRepeating) {
+                moveHistory.push(moveData);
+                redoHistory = [];
+            }
+            
+            updateUndoRedoButtons();
+
+            targetSlot.style.backgroundImage = selectedPiece.style.backgroundImage;
+            targetSlot.style.backgroundSize = '50px 50px';
+            targetSlot.style.backgroundRepeat = 'no-repeat';
+            targetSlot.dataset.pieceId = selectedPiece.dataset.originalPosition;
+
+            if (parseInt(selectedPiece.dataset.originalPosition) === position) {
+                targetSlot.classList.add('correct');
+                correctPlacements++;
+                
+                targetSlot.style.animation = 'bounce 0.5s ease';
+                setTimeout(() => {
+                    targetSlot.style.animation = '';
+                }, 500);
+            }
+
+            selectedPiece.remove();
+            selectedPiece = null;
+
+            updateStatus();
+            updateProgress();
+            checkWin();
+        }
+
+        function undoMove() {
+            if (moveHistory.length === 0) return;
+
+            const lastMove = moveHistory.pop();
+            redoHistory.push(lastMove);
+
+            const puzzleSlots = document.querySelectorAll('#puzzleGrid .puzzle-piece');
+            const targetSlot = puzzleSlots[lastMove.position];
+
+            if (targetSlot.dataset.pieceId === lastMove.pieceId) {
+                targetSlot.style.backgroundImage = '';
+                targetSlot.style.backgroundSize = '';
+                targetSlot.style.backgroundRepeat = '';
+                targetSlot.classList.remove('correct');
+                targetSlot.dataset.pieceId = '';
+
+                if (lastMove.wasCorrect) {
+                    correctPlacements--;
+                }
+
+                const piecesGrid = document.getElementById('piecesGrid');
+                const piece = document.createElement('div');
+                piece.className = 'puzzle-piece';
+                piece.dataset.originalPosition = lastMove.pieceId;
+                piece.dataset.currentPosition = -1;
+                piece.style.backgroundImage = lastMove.backgroundImage;
+                piece.style.backgroundSize = '50px 50px';
+                piece.style.backgroundRepeat = 'no-repeat';
+                piece.onclick = () => selectPiece(piece);
+                
+                piece.style.opacity = '0';
+                piece.style.transform = 'scale(0.5)';
+                piecesGrid.appendChild(piece);
+                
+                setTimeout(() => {
+                    piece.style.transition = 'all 0.3s ease';
+                    piece.style.opacity = '1';
+                    piece.style.transform = 'scale(1)';
+                }, 10);
+
+                updateStatus();
+                updateProgress();
+                updateUndoRedoButtons();
+            }
+        }
+
+        async function repeatMove() {
+            if (redoHistory.length === 0 || isRepeating) return;
+
+            const repeatBtn = document.getElementById('repeatBtn');
+            const moveToRepeat = redoHistory[redoHistory.length - 1];
+            
+            // Indica che stiamo eseguendo una ripetizione
+            isRepeating = true;
+            repeatBtn.classList.add('executing');
+            repeatBtn.disabled = true;
+
+            // Trova la tessera nelle tessere mescolate
+            const piecesGrid = document.getElementById('piecesGrid');
+            const pieceToMove = Array.from(piecesGrid.children).find(
+                piece => piece.dataset.originalPosition === moveToRepeat.pieceId
+            );
+
+            if (pieceToMove) {
+                // Evidenzia la tessera da spostare
+                pieceToMove.classList.add('selected');
+                
+                // Evidenzia la posizione di destinazione
+                const puzzleSlots = document.querySelectorAll('#puzzleGrid .puzzle-piece');
+                const targetSlot = puzzleSlots[moveToRepeat.position];
+                targetSlot.classList.add('highlight-target');
+
+                // Aspetta un momento per mostrare l'evidenziazione
+                await new Promise(resolve => setTimeout(resolve, 800));
+
+                // Seleziona la tessera
+                selectPiece(pieceToMove);
+                
+                // Aspetta un altro momento
+                await new Promise(resolve => setTimeout(resolve, 500));
+                
+                // Rimuovi l'evidenziazione
+                targetSlot.classList.remove('highlight-target');
+                
+                // Esegui la mossa
+                redoHistory.pop(); // Rimuovi dalla cronologia redo
+                placePiece(moveToRepeat.position);
+                
+                // Mostra feedback positivo
+                showRepeatFeedback();
+            }
+
+            // Ripristina lo stato normale
+            isRepeating = false;
+            repeatBtn.classList.remove('executing');
+            updateUndoRedoButtons();
+        }
+
+        function showRepeatFeedback() {
+            const status = document.getElementById('status');
+            const originalText = status.textContent;
+            const originalColor = status.style.color;
+            
+            status.textContent = '🔄 Mossa ripetuta con successo!';
+            status.style.color = '#00d2d3';
+            
+            setTimeout(() => {
+                status.textContent = originalText;
+                status.style.color = originalColor;
+            }, 1500);
+        }
+
+        function updateUndoRedoButtons() {
+            const undoBtn = document.getElementById('undoBtn');
+            const repeatBtn = document.getElementById('repeatBtn');
+            const repeatIndicator = document.getElementById('repeatIndicator');
+            
+            undoBtn.disabled = moveHistory.length === 0;
+            repeatBtn.disabled = redoHistory.length === 0 || isRepeating;
+            
+            // Aggiorna l'indicatore del numero di mosse ripetibili
+            if (redoHistory.length > 0) {
+                repeatIndicator.textContent = redoHistory.length;
+                repeatIndicator.classList.remove('hidden');
+            } else {
+                repeatIndicator.classList.add('hidden');
+            }
+        }
+
+        function updateStatus() {
+            const status = document.getElementById('status');
+            const remaining = totalPieces - document.querySelectorAll('#puzzleGrid .puzzle-piece[style*="background-image"]').length;
+            const undoAvailable = moveHistory.length;
+            const redoAvailable = redoHistory.length;
+            
+            status.textContent = `Tessere rimanenti: ${remaining} | Posizioni corrette: ${correctPlacements} | Mosse: ${moveHistory.length}`;
+            
+            if (redoAvailable > 0) {
+                status.textContent += ` | Repeat disponibili: ${redoAvailable}`;
+            }
+        }
+
+        function updateProgress() {
+            const progress = (correctPlacements / totalPieces) * 100;
+            document.getElementById('progressFill').style.width = `${progress}%`;
+        }
+
+        function checkWin() {
+            if (correctPlacements === totalPieces) {
+                setTimeout(() => {
+                    showCongratulations();
+                }, 500);
+            }
+        }
+
+        function showCongratulations() {
+            const congratsDiv = document.createElement('div');
+            congratsDiv.className = 'congratulations';
+            congratsDiv.innerHTML = '🎉 Congratulazioni!<br>Hai completato il puzzle! 🎉';
+            document.body.appendChild(congratsDiv);
+
+            setTimeout(() => {
+                congratsDiv.remove();
+            }, 3000);
+        }
+
+        function resetPuzzle() {
+            if (!currentImage) return;
+
+            moveHistory = [];
+            redoHistory = [];
+            updateUndoRedoButtons();
+
+            const puzzleSlots = document.querySelectorAll('#puzzleGrid .puzzle-piece');
+            puzzleSlots.forEach(slot => {
+                slot.style.backgroundImage = '';
+                slot.style.backgroundSize = '';
+                slot.style.backgroundRepeat = '';
+                slot.classList.remove('correct');
+                slot.dataset.pieceId = '';
+            });
+
+            correctPlacements = 0;
+            selectedPiece = null;
+            createPuzzlePieces();
+            shufflePieces();
+            updateStatus();
+            updateProgress();
+        }
+
+        async function savePuzzle() {
+            if (!currentImage || !imageCanvas) {
+                alert('Nessuna immagine caricata!');
+                return;
+            }
+
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = 250;
+            canvas.height = 500;
+
+            ctx.fillStyle = '#f8f9fa';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            const puzzleSlots = document.querySelectorAll('#puzzleGrid .puzzle-piece');
+            
+            puzzleSlots.forEach((slot, index) => {
+                const row = Math.floor(index / 5);
+                const col = index % 5;
+                
+                if (slot.style.backgroundImage && slot.dataset.pieceId) {
+                    const pieceId = parseInt(slot.dataset.pieceId);
+                    const originalRow = Math.floor(pieceId / 5);
+                    const originalCol = pieceId % 5;
+                    
+                    ctx.drawImage(
+                        imageCanvas,
+                        originalCol * 50, originalRow * 50, 50, 50,
+                        col * 50, row * 50, 50, 50
+                    );
+                    
+                    ctx.strokeStyle = slot.classList.contains('correct') ? '#00d2d3' : '#ff6b6b';
+                    ctx.lineWidth = 2;
+                    ctx.strokeRect(col * 50, row * 50, 50, 50);
+                } else {
+                    ctx.strokeStyle = '#dee2e6';
+                    ctx.lineWidth = 1;
+                    ctx.strokeRect(col * 50, row * 50, 50, 50);
+                }
+            });
+
+            canvas.toBlob(function(blob) {
+                if (blob) {
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `puzzle_${new Date().getTime()}.jpg`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                    
+                    const status = document.getElementById('status');
+                    const originalText = status.textContent;
+                    status.textContent = '✅ Puzzle salvato con successo!';
+                    status.style.color = '#00d2d3';
+                    setTimeout(() => {
+                        status.textContent = originalText;
+                        status.style.color = '';
+                    }, 2000);
+                } else {
+                    alert('Errore nel creare il file immagine');
+                }
+            }, 'image/jpeg', 0.95);
+        }
+
+        // Gestione drag and drop
+        const dropZone = document.querySelector('.drop-zone');
+
+        dropZone.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            dropZone.style.borderColor = '#ffdd59';
+            dropZone.style.background = 'rgba(255, 221, 89, 0.1)';
+        });
+
+        dropZone.addEventListener('dragleave', function(e) {
+            e.preventDefault();
+            dropZone.style.borderColor = 'rgba(255, 255, 255, 0.5)';
+            dropZone.style.background = 'transparent';
+        });
+
+        dropZone.addEventListener('drop', function(e) {
+            e.preventDefault();
+            dropZone.style.borderColor = 'rgba(255, 255, 255, 0.5)';
+            dropZone.style.background = 'transparent';
+            
+            const files = e.dataTransfer.files;
+            if (files.length > 0 && files[0].type.startsWith('image/')) {
+                const event = { target: { files: [files[0]] } };
+                loadImage(event);
+            }
+        });
+    </script>
+</body>
+</html>
